@@ -71,6 +71,18 @@
 
 ## Credentials
 
+- Provider configuration must support an API key and a configurable CostGraph
+  API base URL. Hosted and self-hosted deployments are first-class targets.
+- Use `api_key` with `COSTGRAPH_API_KEY` as its environment fallback. Use `api_url`
+  with `COSTGRAPH_API_URL` as its environment fallback and
+  `https://api.costgraph.ai` as the hosted default. These environment names match
+  the existing CLI. Explicit configuration wins over environment values.
+- Send the key as `X-API-Key` to the configured deployment. Every management
+  client and request must use the configured base URL. Do not fall back to the
+  hosted API when a self-hosted request fails or send its key to a hosted helper.
+- Validate the API URL and handle trailing slashes and supported reverse-proxy
+  path prefixes consistently. Document whether the value includes an API path.
+  Keep normal certificate verification enabled for self-hosted deployments.
 - Support explicit provider configuration and documented environment fallbacks.
   Credentials must work in unattended Terraform runs. Never read a developer's
   browser session or CLI credential file implicitly.
@@ -80,6 +92,23 @@
 - `Sensitive` hides display; it does not keep a resource value out of Terraform
   state. Document that distinction when accepting integration secrets. Prefer
   AWS role assumption and Google Cloud impersonation over long-lived keys.
+
+## Registry documentation
+
+- Generate provider configuration docs from useful schema descriptions. Include
+  hosted and self-hosted examples, `api_key` and `api_url`, environment fallbacks,
+  precedence, the hosted default, and the exact API base URL format.
+- Explain that the endpoint is the CostGraph API URL, not the dashboard URL or
+  pricing API URL. Show credentials through environment configuration or a
+  sensitive input variable rather than literal tokens in HCL.
+- Describe the permissions needed for each resource. Do not imply an existing
+  tenant key already has the organization permissions needed to create tenants.
+- Keep resource descriptions outcome-based and name actual inputs and outputs.
+  Explain import, updates, deletion effects, and deployment/version prerequisites
+  where relevant. Replace scaffold placeholders and generic attribute hints.
+- Acceptance proof must exercise configured endpoints and the same supported
+  lifecycle on hosted and self-hosted targets before claiming compatibility.
+  Extend real lifecycle coverage rather than adding tests of configuration text.
 
 ## Layout and local commands
 
