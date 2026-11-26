@@ -2,6 +2,12 @@ name: API lifecycle acceptance
 
 on:
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Lifecycle suite to run against the isolated deployment
+        type: choice
+        default: core
+        options: [core, aws, gcp, all]
 
 permissions:
   contents: read
@@ -11,6 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     environment: acceptance
     env:
+      TEST_SUITE: ${{ inputs.suite }}
+      COSTGRAPH_TEST_MANAGEMENT_API_KEY: ${{ secrets.COSTGRAPH_TEST_MANAGEMENT_API_KEY }}
+      COSTGRAPH_TEST_MODEL_KEY: ${{ vars.COSTGRAPH_TEST_MODEL_KEY }}
+      COSTGRAPH_TEST_AWS_BILLING_ACCOUNT_ID: ${{ vars.COSTGRAPH_TEST_AWS_BILLING_ACCOUNT_ID }}
+      COSTGRAPH_TEST_AWS_REGION: ${{ vars.COSTGRAPH_TEST_AWS_REGION }}
+      COSTGRAPH_TEST_AWS_BUCKET: ${{ vars.COSTGRAPH_TEST_AWS_BUCKET }}
+      COSTGRAPH_TEST_AWS_PREFIX: ${{ vars.COSTGRAPH_TEST_AWS_PREFIX }}
+      COSTGRAPH_TEST_AWS_ROLE_ARN: ${{ vars.COSTGRAPH_TEST_AWS_ROLE_ARN }}
+      COSTGRAPH_TEST_GCP_BILLING_ACCOUNT_ID: ${{ vars.COSTGRAPH_TEST_GCP_BILLING_ACCOUNT_ID }}
+      COSTGRAPH_TEST_GCP_QUERY_PROJECT: ${{ vars.COSTGRAPH_TEST_GCP_QUERY_PROJECT }}
+      COSTGRAPH_TEST_GCP_TARGET_PRINCIPAL: ${{ vars.COSTGRAPH_TEST_GCP_TARGET_PRINCIPAL }}
       COSTGRAPH_TEST_API_URL: ${{ vars.COSTGRAPH_TEST_API_URL }}
       COSTGRAPH_TEST_API_KEY: ${{ secrets.COSTGRAPH_TEST_API_KEY }}
       COSTGRAPH_TEST_TENANT_ID: ${{ vars.COSTGRAPH_TEST_TENANT_ID }}
@@ -23,4 +40,12 @@ jobs:
         with:
           terraform_version: 1.15.3
           terraform_wrapper: false
-      - run: make testacc
+      - name: Run the selected lifecycle suite
+        run: |
+          case "$TEST_SUITE" in
+            core) make testacc-core ;;
+            aws) make testacc-aws ;;
+            gcp) make testacc-gcp ;;
+            all) make testacc ;;
+            *) exit 1 ;;
+          esac
