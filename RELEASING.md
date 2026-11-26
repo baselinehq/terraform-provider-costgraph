@@ -6,7 +6,7 @@ set of binaries, checksum file, and signature. Registry publication is separate
 from CLI compatibility testing.
 
 Neither Registry listing is live yet. The release workflow creates a draft.
-Publishing requires an approved signing key, a finalized release, and initial
+Publishing requires the registered public signing key, a finalized release, and initial
 registration with each Registry.
 
 ## Verify compatibility
@@ -43,7 +43,7 @@ available. Positive cloud acceptance remains pending for both CLIs. Read
 ## Prepare one signed release
 
 Merge and deploy the required backend APIs. Merge the SDK and provider stack,
-complete cloud acceptance, and choose repository licenses. Configure the protected
+complete cloud acceptance, and retain the MIT license in the repositories. Configure the protected
 `release` environment with `GPG_PRIVATE_KEY` and `GPG_PASSPHRASE`. Keep the private
 key in that environment and register only its public half with the registries.
 

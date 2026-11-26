@@ -4,8 +4,8 @@ Create tenants and connect provider accounts to hosted or self-hosted CostGraph
 with Terraform. The provider uses Plugin Framework and the shared
 [CostGraph Go SDK](https://github.com/baselinehq/costgraph-go).
 
-This development version contains five resources and five data sources. It has
-not been published on the Terraform Registry. Deploy [the backend management APIs](https://github.com/baselinehq/backend/pull/1446) before using these resources.
+This development version contains five resources and five data sources. The first release is v0.1.0. Registry registration is separate from the GitHub
+release. Deploy [the backend management APIs](https://github.com/baselinehq/backend/pull/1446) before using these resources.
 
 | Resource | Outcome |
 | --- | --- |
@@ -122,6 +122,9 @@ make release-check
 
 The tag workflow creates a draft GitHub release. Configure `GPG_PRIVATE_KEY` and
 `GPG_PASSPHRASE` in the `release` environment before using it. Registry namespace
-registration, signing-key ownership, license selection, cloud acceptance, and
-publishing the first version remain release prerequisites. No release tag has
-been created.
+registration, signing-key ownership, cloud acceptance, and
+publishing the first version remain release prerequisites. The first provider release uses the v0.1.0 tag.
+
+## License
+
+This project uses the [MIT License](LICENSE).
