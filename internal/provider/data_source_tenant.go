@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"regexp"
+	"slices"
 	"strings"
 
 	costgraph "github.com/baselinehq/costgraph-go"
@@ -35,7 +36,7 @@ func (d *tenantDataSource) Metadata(_ context.Context, req datasource.MetadataRe
 
 func (d *tenantDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Read a tenant exposed by the configured API key. Returns the tenant name and organization ID. This lookup does not list or manage other tenants in the organization. An unavailable tenant returns an error.",
+		MarkdownDescription: "Read a tenant accessible to the configured API key. An active organization owner with organization:manage can look up another tenant in the same organization. Other keys can look up only tenants exposed by their identity. Returns the tenant name and organization ID. This data source does not grant permissions, and an unavailable tenant returns an error.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -71,6 +72,21 @@ func (d *tenantDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	identity, err := d.client.CurrentIdentity(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("Could not read tenant", err.Error())
+		return
+	}
+	if slices.Contains(identity.PermissionScopes, costgraph.ScopeOrganizationManage) {
+		if identity.OrganizationID == nil || *identity.OrganizationID == "" {
+			resp.Diagnostics.AddError("Organization is missing", "The configured credential did not return an organization identity.")
+			return
+		}
+		tenant, err := d.client.GetTenant(ctx, *identity.OrganizationID, config.ID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Could not read tenant", err.Error())
+			return
+		}
+		resp.Diagnostics.Append(resp.State.Set(ctx, tenantDataSourceModel{
+			ID: config.ID, Name: types.StringValue(tenant.Name), OrganizationID: types.StringValue(tenant.OrganizationID),
+		})...)
 		return
 	}
 	for _, tenant := range identity.Tenants {

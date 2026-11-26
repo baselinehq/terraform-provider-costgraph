@@ -12,6 +12,17 @@ Manage CostGraph configuration in hosted or self-hosted deployments using an API
 
 Set `COSTGRAPH_API_KEY` to an API key from the deployment you want to manage.
 The resource documentation lists the permissions that the key needs.
+Creating tenants and managing AWS or Google Cloud connections require an active
+organization owner's user API key explicitly granted `organization:manage`.
+Existing keys do not receive it automatically. Normal data queries remain
+tenant-bound. Installation tokens are not management credentials.
+
+Keep this key in a bootstrap tenant. Reference each managed tenant from its child
+integration resources so Terraform disconnects them before deactivating the tenant.
+The default tenant and the tenant owning the active key cannot be deleted.
+
+These management resources require the accompanying CostGraph backend APIs.
+An older hosted or self-hosted deployment may not expose them yet.
 
 For hosted CostGraph, the API URL defaults to `https://api.costgraph.ai`.
 For a self-hosted deployment, set `COSTGRAPH_API_URL` to its API base URL.

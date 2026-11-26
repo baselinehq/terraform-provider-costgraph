@@ -3,12 +3,12 @@
 page_title: "costgraph_tenant Data Source - costgraph"
 subcategory: ""
 description: |-
-  Read a tenant exposed by the configured API key. Returns the tenant name and organization ID. This lookup does not list or manage other tenants in the organization. An unavailable tenant returns an error.
+  Read a tenant accessible to the configured API key. An active organization owner with organization:manage can look up another tenant in the same organization. Other keys can look up only tenants exposed by their identity. Returns the tenant name and organization ID. This data source does not grant permissions, and an unavailable tenant returns an error.
 ---
 
 # costgraph_tenant (Data Source)
 
-Read a tenant exposed by the configured API key. Returns the tenant name and organization ID. This lookup does not list or manage other tenants in the organization. An unavailable tenant returns an error.
+Read a tenant accessible to the configured API key. An active organization owner with organization:manage can look up another tenant in the same organization. Other keys can look up only tenants exposed by their identity. Returns the tenant name and organization ID. This data source does not grant permissions, and an unavailable tenant returns an error.
 
 ## Example Usage
 

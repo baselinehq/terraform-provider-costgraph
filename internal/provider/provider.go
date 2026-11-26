@@ -87,7 +87,9 @@ func (p *CostGraphProvider) Configure(ctx context.Context, req provider.Configur
 }
 
 func (p *CostGraphProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{NewFocusPushIntegrationResource}
+	return []func() resource.Resource{
+		NewFocusPushIntegrationResource, NewTenantResource,
+	}
 }
 
 func (p *CostGraphProvider) DataSources(_ context.Context) []func() datasource.DataSource {
