@@ -90,13 +90,13 @@ func (p *CostGraphProvider) Resources(_ context.Context) []func() resource.Resou
 	return []func() resource.Resource{
 		NewFocusPushIntegrationResource, NewTenantResource, NewAIGatewayIntegrationResource,
 		NewAWSIntegrationResource, NewGoogleCloudIntegrationResource, NewAzureIntegrationResource,
-		NewKubernetesClusterResource,
+		NewKubernetesClusterResource, NewVirtualTagResource,
 	}
 }
 
 func (p *CostGraphProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewIntegrationDataSource, NewCurrentOrganizationDataSource, NewTenantDataSource,
-		NewIntegrationsDataSource, NewIntegrationProvidersDataSource,
+		NewIntegrationsDataSource, NewIntegrationProvidersDataSource, NewVirtualTagDataSource, NewVirtualTagsDataSource,
 	}
 }

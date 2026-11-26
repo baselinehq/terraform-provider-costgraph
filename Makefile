@@ -5,7 +5,7 @@ GORELEASER_VERSION := 2.20.3
 TFPLUGINDOCS := go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@$(TFPLUGINDOCS_VERSION)
 GORELEASER := go run github.com/goreleaser/goreleaser/v2@v$(GORELEASER_VERSION)
 
-.PHONY: fmt build lint generate check-generated testacc testacc-core testacc-aws testacc-gcp testacc-tofu check-opentofu release-check
+.PHONY: fmt build lint generate check-generated testacc testacc-core testacc-aws testacc-gcp testacc-tofu testacc-virtual-tags check-opentofu release-check
 
 fmt:
 	gofmt -w .
@@ -32,6 +32,9 @@ testacc:
 
 testacc-core:
 	TF_ACC=1 go test -v -count=1 -timeout 15m ./internal/provider -run 'TestAcc(FocusPushIntegration|Tenant|AIGatewayIntegration)$$'
+
+testacc-virtual-tags:
+	TF_ACC=1 go test -v -count=1 -timeout 15m ./internal/provider -run '^TestAccVirtualTag$$'
 
 testacc-aws:
 	TF_ACC=1 go test -v -count=1 -timeout 15m ./internal/provider -run '^TestAccAWSIntegration$$'
