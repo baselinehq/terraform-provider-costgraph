@@ -166,9 +166,21 @@
   Package static binaries, platform ZIPs, the protocol manifest, SHA256SUMS, and
   its detached binary GPG signature in the Registry-required names. Publish the
   artifact bytes that were verified. Attestations do not replace Registry signing.
-- Confirm signer custody, Registry registration, platform matrix, minimum
-  Terraform version, and OpenTofu support before the first release. Do not claim
-  compatibility without verification or copy a historical version matrix.
+- Keep Terraform and OpenTofu parity using the same provider source, protocol 6
+  binary, and signed release artifacts. Verify the pinned CLI versions with real
+  core acceptance before claiming support. Positive AWS and Google Cloud tests
+  still require isolated cloud fixtures for each CLI.
+- Keep the OpenTofu schema-load CI check and manual acceptance CLI selector.
+  Use registry.opentofu.org/baselinehq/costgraph for OpenTofu development checks.
+  Keep source = "baselinehq/costgraph" in portable examples. Full registry
+  addresses and lock-file entries remain distinct.
+- Follow RELEASING.md for separate Registry submissions. OpenTofu requires its
+  GitHub issue form UI for provider and public-key submissions. Never create a
+  substitute issue through gh or the API. Do not publish a fork or rebuild the
+  same version separately for the two registries.
+- Confirm signer custody, both Registry registrations, platform matrix, and the
+  intended CLI version matrix before the first release. Do not claim publication
+  or compatibility from a schema check alone.
 - Prefer small resource-by-resource PRs. Release cadence is not established.
   Do not infer a weekly schedule or publish automatically on every merge.
 

@@ -50,7 +50,8 @@ connections rather than creating those cloud resources.
 
 ## Develop locally
 
-Use Go 1.26 or later and Terraform. Acceptance was verified with Terraform 1.15.3.
+Use Go 1.26 or later. The verified CLIs are Terraform 1.15.3 and OpenTofu
+1.13.10. OpenTofu uses the same provider binary and resource schemas.
 Read [AGENTS.md](AGENTS.md) before contributing.
 
 Run the build and checks.
@@ -99,6 +100,16 @@ the accounts are available. `make testacc` runs every acceptance scenario.
 PR checks run without credentials. The manual acceptance workflow separates core,
 AWS, Google Cloud, and all scenarios. Configure its protected `acceptance`
 environment before running it against trusted code.
+
+## Use OpenTofu
+
+Run `make check-opentofu` to load the provider schema with OpenTofu. Use
+`make testacc-tofu` with the core acceptance environment to run the same real
+resource lifecycles. Set `TOFU` to an installed OpenTofu binary when needed.
+
+Both registries can use the same signed GitHub release. Their initial
+registrations remain pending. Read [RELEASING.md](RELEASING.md) for the separate
+Registry submissions, signing requirements, and compatibility checks.
 
 ## Prepare a release
 
