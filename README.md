@@ -1,69 +1,104 @@
 # Terraform provider for CostGraph
 
-Manage CostGraph configuration with Terraform using an API key and the API URL
-of your hosted or self-hosted deployment.
+Create tenants and connect provider accounts to hosted or self-hosted CostGraph
+with Terraform. The provider uses Plugin Framework and the shared
+[CostGraph Go SDK](https://github.com/baselinehq/costgraph-go).
 
-This development version includes one managed resource and five data sources.
-It has not been published on the Terraform Registry. Connection readback requires
-the backend's `GET /api/v1/integrations/connections/{id}` endpoint.
+This development version contains five resources and five data sources. It has
+not been published on the Terraform Registry. Deploy [the backend management APIs](https://github.com/baselinehq/backend/pull/1446) before using these resources.
 
-| Type | Outcome |
+| Resource | Outcome |
 | --- | --- |
-| `costgraph_focus_push_integration` resource | Register a provider billing account for FOCUS ingestion. Rename, import, or disconnect the connection. |
-| `costgraph_current_organization` data source | Read the organization associated with your API key. |
-| `costgraph_tenant` data source | Read a tenant available to your API key. |
-| `costgraph_integration` data source | Look up an existing connection by UUID. |
-| `costgraph_integrations` data source | List your tenant's connections. |
-| `costgraph_integration_providers` data source | Read the supported billing-provider catalog. |
+| `costgraph_tenant` | Create, rename, or deactivate a tenant within your organization. |
+| `costgraph_aws_integration` | Connect an existing AWS FOCUS export through an IAM role. |
+| `costgraph_google_cloud_integration` | Connect a Google Cloud billing export through service account impersonation. |
+| `costgraph_ai_gateway_integration` | Connect a gateway and manage model mappings, sub-account names, and collection settings. |
+| `costgraph_focus_push_integration` | Register a billing account that receives pushed FOCUS records. |
 
-Managed tenants, AWS, Google Cloud, and AI gateway connections remain in the
-initial release scope. They need additional API contracts before implementation.
-GitHub is deferred.
+The five data sources read your current organization, a tenant, an individual
+integration, your API key's tenant integration list, and the billing-provider
+catalog. GitHub onboarding, member management, and API-key management are outside
+this release.
 
 ## Configure the provider
 
 Set `COSTGRAPH_API_KEY` to a key from the deployment you want to manage. The
-hosted API URL defaults to `https://api.costgraph.ai`. For self-hosted deployments,
+hosted API URL defaults to `https://api.costgraph.ai`. For a self-hosted deployment,
 set `COSTGRAPH_API_URL` or the provider's `api_url` attribute. Omit `/api/v1` and
 keep any reverse-proxy prefix. Explicit attributes take precedence over the
 environment. Certificate verification remains enabled.
 
-Read the [provider configuration guide](docs/index.md) for examples and the
-[FOCUS push resource guide](docs/resources/focus_push_integration.md) for required
-permissions, import, replacement behavior, and disconnection effects.
+Tenant administration and AWS or Google Cloud connections require an organization
+owner's user API key explicitly granted `organization:manage`. Existing keys do
+not gain this permission automatically. The permission covers supported
+management operations within that organization. Ordinary cost and telemetry
+queries remain bound to the key's tenant. Installation tokens cannot manage
+tenants or provider accounts.
+
+Reference `costgraph_tenant.production.id` from child integrations so Terraform
+disconnects them before deactivating their tenant. Keep the management key in a
+separate bootstrap tenant. CostGraph refuses to delete that key's tenant or the
+default tenant. If someone deactivates a tenant outside Terraform before its
+connections are removed, their refresh can fail with a permission error. Resolve
+that access issue before removing the remaining managed connections.
+
+Read the [provider configuration guide](docs/index.md) and the resource guides in
+[docs/resources](docs/resources) for examples, import, update behavior, and
+requirements. Cloud IAM roles, impersonation permissions, and billing exports
+must exist before connecting their accounts. This provider configures CostGraph
+connections rather than creating those cloud resources.
 
 ## Develop locally
 
 Use Go 1.26 or later and Terraform. Acceptance was verified with Terraform 1.15.3.
-The provider uses Plugin Framework and the shared [CostGraph Go SDK](https://github.com/baselinehq/costgraph-go).
+Read [AGENTS.md](AGENTS.md) before contributing.
 
-Run the local build and checks.
+Run the build and checks.
 
 ```sh
 make build lint check-generated
 ```
 
 The binary is written to `bin/terraform-provider-costgraph`. Use a project-local
-Terraform CLI development override for `baselinehq/costgraph` when testing the
-binary. Read [AGENTS.md](AGENTS.md) before contributing.
+Terraform CLI development override for `baselinehq/costgraph` when testing it.
 
-## Run the API lifecycle test
+## Run acceptance tests
 
-Use an isolated CostGraph deployment and tenant. The test creates, renames,
-replaces, and deletes connection records. Configure `COSTGRAPH_TEST_API_URL`,
-`COSTGRAPH_TEST_API_KEY`, and `COSTGRAPH_TEST_TENANT_ID` for that test environment.
+Use an isolated CostGraph deployment. The tests create, update, import, and delete
+real resources through Terraform and confirm the results through the public API.
+Missing configuration fails clearly. Tests do not bypass cloud access checks.
 
-Run the test against the real API.
+Configure these values for the core tenant, gateway, and FOCUS lifecycles.
+
+| Variable | Required value |
+| --- | --- |
+| `COSTGRAPH_TEST_API_URL` | API URL of the isolated deployment. |
+| `COSTGRAPH_TEST_API_KEY` | Ordinary tenant-bound key for the FOCUS scenario. |
+| `COSTGRAPH_TEST_TENANT_ID` | Tenant associated with that ordinary key. |
+| `COSTGRAPH_TEST_MANAGEMENT_API_KEY` | Owner key explicitly granted `organization:manage`. |
+| `COSTGRAPH_TEST_MODEL_KEY` | Canonical model key present in the deployment's model catalog. |
+
+Run the core scenarios.
 
 ```sh
-make testacc
+make testacc-core
 ```
 
-The scenario verifies persisted values, clean plans, import, all five data
-sources, recreation after external deletion, replacement, and API-confirmed
-destruction. Missing test configuration fails clearly. PR checks run without
-credentials. Configure the manual workflow's `acceptance` environment with the
-same variables and a secret API key before running it.
+These cover persisted values, empty follow-up plans, import, all five data
+sources, in-place updates, removed gateway overrides and mappings, tenant and
+connection recreation after external deletion, replacement, and confirmed
+destruction. They passed against an isolated local backend. The earlier FOCUS
+scenario also passed through a reverse-proxy URL prefix.
+
+The AWS and Google Cloud lifecycle tests require separate isolated cloud billing
+exports and correctly configured access. Their prerequisites are in
+[the cloud acceptance guide](CLOUD_ACCEPTANCE.md). Those positive cloud scenarios
+are prepared and have not been run. Use their individual Makefile targets when
+the accounts are available. `make testacc` runs every acceptance scenario.
+
+PR checks run without credentials. The manual acceptance workflow separates core,
+AWS, Google Cloud, and all scenarios. Configure its protected `acceptance`
+environment before running it against trusted code.
 
 ## Prepare a release
 
@@ -75,6 +110,7 @@ make release-check
 ```
 
 The tag workflow creates a draft GitHub release. Configure `GPG_PRIVATE_KEY` and
-`GPG_PASSPHRASE` in the `release` environment before using it. Registry
-namespace registration, signing-key ownership, license selection, and publishing
-the first version remain release prerequisites. No release tag has been created.
+`GPG_PASSPHRASE` in the `release` environment before using it. Registry namespace
+registration, signing-key ownership, license selection, cloud acceptance, and
+publishing the first version remain release prerequisites. No release tag has
+been created.

@@ -8,10 +8,11 @@
 - The working five-resource shortlist is tenants, AWS connections, Google Cloud
   connections, AI gateway connections, and FOCUS push connections. Agree exact
   schemas and five useful data sources after closing their API and SDK gaps.
-- The first implementation contains a FOCUS push integration resource and five
-  read-only data sources. Tenant, AWS, Google Cloud, and AI gateway managed
-  resources remain pending their API contracts. Do not report the full release
-  scope as implemented or the provider as published on the Registry.
+- The implementation contains five managed resources and five read-only data
+  sources. Real local Terraform lifecycles cover tenants, AI gateways, and FOCUS
+  push connections. AWS and Google Cloud lifecycle tests are prepared but await
+  isolated cloud accounts. Do not report those tests as passed or the provider as
+  published on the Registry.
 - Audit the selected public API lifecycles and reusable Go client coverage first.
   Close API and SDK gaps before adding Terraform resources. Keep those changes
   separate from the provider PRs.
@@ -48,9 +49,11 @@
 - An endpoint being reachable from the dashboard does not establish that an API
   key can use it. Verify scoped authentication, role checks, tenant boundaries,
   and feature gates against actual routes and handlers.
-- API credentials are tenant-bound today. Do not add organization-wide tenant
-  management by bypassing that boundary. Agree an organization-scoped management
-  credential and permission contract in the backend first.
+- API credentials remain tenant-bound for ordinary data access. The agreed
+  organization:manage scope is explicit, opt-in, and restricted to user API keys
+  owned by active organization owners. Only supported management operations may
+  use it across tenants of the same organization. Never broaden normal tenant
+  data queries or installation tokens through this permission.
 - Do not open a browser during plan or apply. GitHub App installation and OAuth
   consent are prerequisites unless a documented machine-safe attach API exists.
   Never accept an installation ID without verifying ownership and access.
