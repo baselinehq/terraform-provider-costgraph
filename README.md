@@ -1,26 +1,37 @@
 # Terraform provider for CostGraph
 
-Create tenants and connect provider accounts to hosted or self-hosted CostGraph
-with Terraform. The provider uses Plugin Framework and the shared
+Manage CostGraph tenants, provider connections, Kubernetes registrations, and
+virtual tags with Terraform. Use the same provider with hosted or self-hosted
+CostGraph. API access comes from the shared
 [CostGraph Go SDK](https://github.com/baselinehq/costgraph-go).
 
-This development version contains five resources and five data sources. The first release is v0.1.0. Registry registration is separate from the GitHub
-release. Deploy [the backend management APIs](https://github.com/baselinehq/backend/pull/1446) before using these resources.
+Provider [v0.1.0 is published on the Terraform Registry](https://registry.terraform.io/providers/baselinehq/costgraph/0.1.0).
+This branch prepares the next release with eight resources and seven data sources.
+Azure, Kubernetes registration, and virtual-tag management require the
+corresponding backend APIs before you can apply their configurations.
+
+## Manage CostGraph configuration
+
+The resources cover these tasks.
 
 | Resource | Outcome |
 | --- | --- |
 | `costgraph_tenant` | Create, rename, or deactivate a tenant within your organization. |
 | `costgraph_aws_integration` | Connect an existing AWS FOCUS export through an IAM role. |
 | `costgraph_google_cloud_integration` | Connect a Google Cloud billing export through service account impersonation. |
+| `costgraph_azure_integration` | Connect an Azure FOCUS export and rotate its service principal secret without storing it in Terraform state. |
 | `costgraph_ai_gateway_integration` | Connect a gateway and manage model mappings, sub-account names, and collection settings. |
 | `costgraph_focus_push_integration` | Register a billing account that receives pushed FOCUS records. |
+| `costgraph_kubernetes_cluster` | Reserve or import a cluster registration before installing the operator. |
+| `costgraph_virtual_tag` | Manage a tag key and its complete ordered literal or inherited rules. |
 
-The five data sources read your current organization, a tenant, an individual
-integration, your API key's tenant integration list, and the billing-provider
-catalog. GitHub onboarding, member management, and API-key management are outside
-this release.
+Data sources read your organization, a tenant, an individual integration, your
+key's tenant integration list, and the billing-provider catalog. The two virtual
+tag data sources look up a key with its rules or list the tenant's key metadata.
+GitHub onboarding, member management, and API-key management remain outside the
+provider's scope.
 
-## Configure the provider
+## Configure authentication
 
 Set `COSTGRAPH_API_KEY` to a key from the deployment you want to manage. The
 hosted API URL defaults to `https://api.costgraph.ai`. For a self-hosted deployment,
@@ -28,34 +39,50 @@ set `COSTGRAPH_API_URL` or the provider's `api_url` attribute. Omit `/api/v1` an
 keep any reverse-proxy prefix. Explicit attributes take precedence over the
 environment. Certificate verification remains enabled.
 
-Tenant administration and AWS or Google Cloud connections require an organization
-owner's user API key explicitly granted `organization:manage`. Existing keys do
-not gain this permission automatically. The permission covers supported
-management operations within that organization. Ordinary cost and telemetry
-queries remain bound to the key's tenant. Installation tokens cannot manage
-tenants or provider accounts.
+Tenant administration, AWS, Google Cloud, and Azure connections, and Kubernetes
+registrations require an organization owner's user API key explicitly granted
+`organization:manage`. Existing keys do not gain this permission automatically.
+Ordinary cost and telemetry queries remain bound to the key's tenant.
+Installation tokens cannot manage these resources.
 
-Reference `costgraph_tenant.production.id` from child integrations so Terraform
-disconnects them before deactivating their tenant. Keep the management key in a
-separate bootstrap tenant. CostGraph refuses to delete that key's tenant or the
-default tenant. If someone deactivates a tenant outside Terraform before its
-connections are removed, their refresh can fail with a permission error. Resolve
-that access issue before removing the remaining managed connections.
+Virtual tags use a key bound to their target tenant. Lookup requires
+`virtual-tags:read`. Management requires `virtual-tags:write`, which includes
+read access. `organization:manage` does not grant these permissions or access to
+another tenant's tags. If one configuration manages organization resources and
+tags in another tenant, configure a separate provider alias with that tenant's key.
 
-Read the [provider configuration guide](docs/index.md) and the resource guides in
-[docs/resources](docs/resources) for examples, import, update behavior, and
-requirements. Cloud IAM roles, impersonation permissions, and billing exports
-must exist before connecting their accounts. This provider configures CostGraph
-connections rather than creating those cloud resources.
+Reference a managed tenant from its child integrations so Terraform disconnects
+them before deactivating the tenant. Keep the organization-management key in a
+separate bootstrap tenant. CostGraph refuses to delete the default tenant or the
+tenant that owns the active key. If a tenant is deactivated outside Terraform,
+resolve its access before changing the remaining connections.
 
-Proposed Azure, Kubernetes with Helm, and virtual tag interfaces are in
-[examples/proposals](examples/proposals). They are not available in v0.1.0.
+## Use the examples
+
+Read the [provider configuration guide](docs/index.md) and
+[resource guides](docs/resources) for configuration, imports, and deletion effects.
+The provider connects existing cloud resources. IAM roles, service principals,
+permissions, and billing exports must exist first.
+
+Use the [Azure example](examples/resources/costgraph_azure_integration/) for
+write-only secret input and rotation. It requires Terraform 1.11 or later or
+OpenTofu 1.11 or later.
+
+The [Kubernetes and Helm example](examples/kubernetes-with-helm/) pairs a cluster
+registration with the operator chart. Prepare the cluster, namespace, and an
+existing Secret containing a separate tenant-bound collector credential first.
+The registration does not create the Kubernetes cluster or issue credentials.
+
+The [virtual tag example](examples/resources/costgraph_virtual_tag/) assigns
+literal or inherited values in a defined order. Terraform owns the whole key.
+The first active matching rule wins. Import an existing key before managing it.
+The [ownership design](design/virtual-tags.md) explains revision conflicts and
+supported rule types.
 
 ## Develop locally
 
-Use Go 1.26 or later. The verified CLIs are Terraform 1.15.3 and OpenTofu
-1.13.10. OpenTofu uses the same provider binary and resource schemas.
-Read [AGENTS.md](AGENTS.md) before contributing.
+Use Go 1.26 or later. The pinned verification CLIs are Terraform 1.15.3 and
+OpenTofu 1.13.10. Read [AGENTS.md](AGENTS.md) before contributing.
 
 Run the build and checks.
 
@@ -64,23 +91,30 @@ make build lint check-generated
 ```
 
 The binary is written to `bin/terraform-provider-costgraph`. Use a project-local
-Terraform CLI development override for `baselinehq/costgraph` when testing it.
+CLI development override for `baselinehq/costgraph` when testing it.
 
 ## Run acceptance tests
 
-Use an isolated CostGraph deployment. The tests create, update, import, and delete
-real resources through Terraform and confirm the results through the public API.
-Missing configuration fails clearly. Tests do not bypass cloud access checks.
+Use an isolated CostGraph deployment. The scenarios create, update, import, and
+delete real objects and check them through the public API. Missing configuration
+fails clearly. The tests do not bypass cloud access checks.
 
-Configure these values for the core tenant, gateway, and FOCUS lifecycles.
+Configure the core suite with these values.
 
 | Variable | Required value |
 | --- | --- |
 | `COSTGRAPH_TEST_API_URL` | API URL of the isolated deployment. |
-| `COSTGRAPH_TEST_API_KEY` | Ordinary tenant-bound key for the FOCUS scenario. |
-| `COSTGRAPH_TEST_TENANT_ID` | Tenant associated with that ordinary key. |
-| `COSTGRAPH_TEST_MANAGEMENT_API_KEY` | Owner key explicitly granted `organization:manage`. |
-| `COSTGRAPH_TEST_MODEL_KEY` | Canonical model key present in the deployment's model catalog. |
+| `COSTGRAPH_TEST_API_KEY` | Tenant-bound key with `focus:read`, `focus:write`, `integrations:read`, `operator:read`, `operator:write`, and `virtual-tags:write`. |
+| `COSTGRAPH_TEST_TENANT_ID` | Tenant associated with that key. |
+| `COSTGRAPH_TEST_MANAGEMENT_API_KEY` | Organization owner's key explicitly granted `organization:manage`. |
+| `COSTGRAPH_TEST_MODEL_KEY` | Canonical model key in the deployment's model catalog. |
+| `COSTGRAPH_TEST_VIRTUAL_TAG_RESOURCE_ID` | Resource ID of the controlled AWS billing fixture described next. |
+
+The virtual-tag scenario needs a current-month billed AWS record named
+`payments-virtual-tag-test` with an `owner=platform` tag. Its assertions check
+actual cost attribution, including rule reordering and pausing. Prepare this
+synthetic record only in the isolated test deployment. Set
+`COSTGRAPH_TEST_OTHER_TENANT_ID` to exercise the additional tenant-boundary check.
 
 Run the core scenarios.
 
@@ -88,31 +122,31 @@ Run the core scenarios.
 make testacc-core
 ```
 
-These cover persisted values, empty follow-up plans, import, all five data
-sources, in-place updates, removed gateway overrides and mappings, tenant and
-connection recreation after external deletion, replacement, and confirmed
-destruction. They passed against an isolated local backend. The earlier FOCUS
-scenario also passed through a reverse-proxy URL prefix.
+This suite selects tenant, AI gateway, FOCUS push, Kubernetes registration, and
+virtual-tag lifecycles. It exercises persisted values, empty follow-up plans,
+imports, data sources, updates or replacement, and confirmed destruction. Use
+`make testacc-kubernetes` or `make testacc-virtual-tags` to select either addition.
 
-The AWS and Google Cloud lifecycle tests require separate isolated cloud billing
-exports and correctly configured access. Their prerequisites are in
-[the cloud acceptance guide](CLOUD_ACCEPTANCE.md). Those positive cloud scenarios
-are prepared and have not been run. Use their individual Makefile targets when
-the accounts are available. `make testacc` runs every acceptance scenario.
+AWS, Google Cloud, and Azure positive cloud lifecycles are prepared but have not
+run because isolated accounts are not available. Follow
+[cloud acceptance](CLOUD_ACCEPTANCE.md) before selecting their individual targets.
+`make testacc` selects every scenario and requires every fixture.
 
-PR checks run without credentials. The manual acceptance workflow separates core,
-AWS, Google Cloud, and all scenarios. Configure its protected `acceptance`
-environment before running it against trusted code.
+PR checks run without credentials. The protected manual acceptance workflow lets
+you select the CLI and suite. Run it only against reviewed code and an isolated
+deployment.
 
 ## Use OpenTofu
 
 Run `make check-opentofu` to load the provider schema with OpenTofu. Use
-`make testacc-tofu` with the core acceptance environment to run the same real
-resource lifecycles. Set `TOFU` to an installed OpenTofu binary when needed.
+`make testacc-tofu` with the core acceptance configuration to run the same real
+lifecycles. Set `TOFU=/absolute/path/to/tofu` to select an installed binary.
 
-Both registries can use the same signed GitHub release. Their initial
-registrations remain pending. Read [RELEASING.md](RELEASING.md) for the separate
-Registry submissions, signing requirements, and compatibility checks.
+OpenTofu Registry registration remains pending. Its shorthand provider address
+resolves through a different registry from Terraform, so a Terraform listing
+does not establish OpenTofu installation availability. Both registries can index
+the same signed release. Read [RELEASING.md](RELEASING.md) for registration and
+publication steps.
 
 ## Prepare a release
 
@@ -123,10 +157,11 @@ manifest, checksums, and a detached GPG signature. Validate the configuration.
 make release-check
 ```
 
-The tag workflow creates a draft GitHub release. Configure `GPG_PRIVATE_KEY` and
-`GPG_PASSPHRASE` in the `release` environment before using it. Registry namespace
-registration, signing-key ownership, cloud acceptance, and
-publishing the first version remain release prerequisites. The first provider release uses the v0.1.0 tag.
+The tag workflow creates a draft GitHub release using signing credentials in the
+protected `release` environment. Deploy the required backend APIs, pin the public
+SDK version, complete the available lifecycle checks, and record deferred cloud
+checks before publishing. Verify the signature and artifact checksums, then
+confirm the published version in each registry separately.
 
 ## License
 

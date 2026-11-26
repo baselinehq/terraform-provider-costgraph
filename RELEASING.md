@@ -5,14 +5,15 @@ Both registries can index the same signed GitHub release from
 set of binaries, checksum file, and signature. Registry publication is separate
 from CLI compatibility testing.
 
-Neither Registry listing is live yet. The release workflow creates a draft.
-Publishing requires the registered public signing key, a finalized release, and initial
-registration with each Registry.
+Provider v0.1.0 is published on the Terraform Registry. The namespace and public
+signing key are registered there. OpenTofu Registry registration remains pending.
+The release workflow creates a draft, so a successful build does not publish the
+next version automatically.
 
 ## Verify compatibility
 
-The development provider has been checked with Terraform 1.15.3 and OpenTofu
-1.13.10. Run the credentialless OpenTofu plugin check.
+Use the pinned Terraform 1.15.3 and OpenTofu 1.13.10 CLIs for verification. Run
+the credentialless OpenTofu plugin check.
 
 ```sh
 make check-opentofu
@@ -33,26 +34,48 @@ make testacc-tofu
 
 Set `TOFU=/absolute/path/to/tofu` to select a task-local binary. The target points
 the existing acceptance runner at that binary and the OpenTofu Registry address.
-It uses the existing tenant, AI gateway, FOCUS, and data-source scenarios.
+It selects the tenant, AI gateway, FOCUS, Kubernetes registration, and virtual-tag
+scenarios, including their data sources. The virtual-tag test requires the billed
+fixture described in [README.md](README.md#run-acceptance-tests).
 
 The protected manual acceptance workflow also accepts a CLI choice. Select
-`opentofu` and the relevant suite when real AWS and Google Cloud fixtures are
-available. Positive cloud acceptance remains pending for both CLIs. Read
+`opentofu` and the relevant suite when real AWS, Google Cloud, and Azure
+fixtures are available. AWS, Google Cloud, and Azure positive cloud acceptance remains pending
+for both CLIs until isolated accounts are available. Read
 [CLOUD_ACCEPTANCE.md](CLOUD_ACCEPTANCE.md) before running those scenarios.
 
 ## Prepare one signed release
 
-Merge and deploy the required backend APIs. Merge the SDK and provider stack,
-complete cloud acceptance, and retain the MIT license in the repositories. Configure the protected
-`release` environment with `GPG_PRIVATE_KEY` and `GPG_PASSPHRASE`. Keep the private
-key in that environment and register only its public half with the registries.
+Merge and deploy the required backend APIs. Merge the SDK and pin its public
+version before merging the provider. Retain the MIT license in both repositories.
+Run the real core lifecycles with both CLIs. Record any deferred cloud scenarios
+in the release notes without describing them as passed.
 
-Push a reviewed semantic version tag such as `v0.1.0`. The pinned GoReleaser
+The protected `release` environment supplies `GPG_PRIVATE_KEY` and
+`GPG_PASSPHRASE`. Keep the private key there and register only its public half with
+the registries. Confirm that the signing fingerprint matches the registered key.
+
+Push a reviewed semantic version tag such as `v0.2.0`. The pinned GoReleaser
 workflow builds platform archives, a protocol 6 manifest, checksums, and a detached
 GPG signature. Verify those assets before publishing the draft GitHub release.
+Do not attach a separate public-key file to the provider release. The Terraform
+Registry treats unexpected assets as candidate provider packages.
+
+Verify checksums for all platform ZIPs and the manifest, then verify the detached
+signature. Load the verified binaries with both CLIs and inspect their schemas.
+Publish the verified draft and check a clean Registry installation. Never replace
+artifacts under an existing version tag.
+
 No separate OpenTofu build or copy of the repository is required.
 
-## Register with Terraform
+## Confirm Terraform Registry publication
+
+The initial provider registration is complete. For later versions, confirm that
+the release webhook indexed the published GitHub release and that the expected
+version installs with its signing key verified.
+
+If a new namespace or replacement registration is needed, follow the initial
+registration steps.
 
 Sign in to the Terraform Registry with a GitHub account authorized for the
 BaselineHQ repository. Register the public signing key for the namespace, then

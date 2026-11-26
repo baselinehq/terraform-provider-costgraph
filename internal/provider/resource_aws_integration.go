@@ -87,18 +87,18 @@ func (r *awsIntegrationResource) Schema(_ context.Context, _ resource.SchemaRequ
 		Validators: []validator.String{trimmedStringValidator{}, stringvalidator.RegexMatches(regexp.MustCompile(`^\S+$`), "Use an AWS region without whitespace.")},
 	}
 	attributes["bucket"] = schema.StringAttribute{
-		Required: true, MarkdownDescription: "Existing S3 bucket containing the FOCUS billing export. This resource does not create the bucket or export.",
+		Required: true, MarkdownDescription: "S3 bucket containing the existing FOCUS billing export.",
 		Validators: []validator.String{trimmedStringValidator{}, stringvalidator.RegexMatches(regexp.MustCompile(`^\S+$`), "Use an S3 bucket name without whitespace.")},
 	}
 	attributes["prefix"] = schema.StringAttribute{
-		Optional: true, Computed: true, MarkdownDescription: "Object prefix containing the billing export. Defaults to an empty prefix when created. Omitting it after creation preserves the existing value. Set an empty string to clear it.",
+		Optional: true, Computed: true, MarkdownDescription: "S3 prefix for the export. Defaults to an empty string on creation. Omit it during updates to keep the stored value. Set an empty string to clear it.",
 	}
 	attributes["role_arn"] = schema.StringAttribute{
-		Required: true, MarkdownDescription: "Existing IAM read role that CostGraph assumes. Configure its trust policy with the deployment's trusted principal and your organization's external ID before creating this connection. Access keys are not supported by this resource.",
+		Required: true, MarkdownDescription: "ARN of the IAM role CostGraph assumes to read the export. Configure its trust policy before applying. This resource supports IAM role assumption only.",
 		Validators: []validator.String{stringvalidator.RegexMatches(regexp.MustCompile(`^arn:(?:aws|aws-us-gov|aws-cn):iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$`), "Use an AWS IAM role ARN.")},
 	}
 	attributes["external_id"] = schema.StringAttribute{
-		Computed: true, MarkdownDescription: "Organization external ID stored with the assumed role. Obtain it from CostGraph setup before configuring the role trust policy. This output is available after the connection is created.",
+		Computed: true, MarkdownDescription: "Your organization's external ID, returned after connection creation. Obtain it from CostGraph setup before configuring the IAM trust policy.",
 		PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 	}
 	attributes["activate_cost_allocation_tags"] = schema.BoolAttribute{
@@ -106,7 +106,7 @@ func (r *awsIntegrationResource) Schema(_ context.Context, _ resource.SchemaRequ
 		MarkdownDescription: "Allow CostGraph to activate discovered AWS cost allocation tags. Defaults to true. Set false when the read role must not change tag activation.",
 	}
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Connect an existing AWS FOCUS billing export through an IAM read role. Requires an organization owner's user API key with the organization:manage scope. CostGraph verifies real export access before saving settings. AWS IAM, S3, and billing export setup remain outside this resource. Updates preserve the connection UUID. Import uses its UUID and supports assume-role connections only. Destroying the resource disconnects collection and removes the account's billing data from cost views. It also removes any automation access associated with that connection.",
+		MarkdownDescription: "Connect an existing AWS FOCUS billing export through an IAM role. CostGraph verifies export access before it saves the connection.",
 		Attributes:          attributes,
 	}
 }

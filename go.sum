@@ -14,6 +14,8 @@ github.com/apparentlymart/go-textseg/v15 v15.0.0 h1:uYvfpb3DyLSCGWnctWKGj857c6ew
 github.com/apparentlymart/go-textseg/v15 v15.0.0/go.mod h1:K8XmNZdhEBkdlyDdvbmmsvpAG721bKi0joRfFdHIWJ4=
 github.com/baselinehq/costgraph-go v0.0.0-20261126173730-0b134e2d4365 h1:WhTqGIXrem2l1ulVc0v3tnWe/IgDrB7atXfZRGn1LE8=
 github.com/baselinehq/costgraph-go v0.0.0-20261126173730-0b134e2d4365/go.mod h1:NV5d7S4T6cWoLKQH0OAtDaJQSXXSQ+94GAtxb9V6zfM=
+github.com/baselinehq/costgraph-go v0.2.0 h1:Ilg3kqSgCXRZnF2zoDvMts4XO6AZsaDggGWRMQ2vXb8=
+github.com/baselinehq/costgraph-go v0.2.0/go.mod h1:NV5d7S4T6cWoLKQH0OAtDaJQSXXSQ+94GAtxb9V6zfM=
 github.com/bmatcuk/doublestar v1.1.1/go.mod h1:UD6OnuiIn0yFxxA2le/rnRU1G4RaI4UvFv1sNto9p6w=
 github.com/bufbuild/protocompile v0.14.1 h1:iA73zAf/fyljNjQKwYzUHD6AD4R8KMasmwa/FBatYVw=
 github.com/bufbuild/protocompile v0.14.1/go.mod h1:ppVdAIhbr2H8asPk6k4pY7t9zB1OU5DoEw9xY/FUi1c=

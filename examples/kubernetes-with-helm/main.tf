@@ -20,35 +20,35 @@ provider "helm" {
 }
 
 variable "costgraph_tenant_id" {
-  description = "Existing tenant associated with the collector credential."
+  description = "Existing tenant UUID associated with the operator's collection credential."
   type        = string
 }
 
 variable "kubeconfig_path" {
-  description = "Path to the kubeconfig used to install the operator."
+  description = "Local kubeconfig file for the target cluster."
   type        = string
   default     = "~/.kube/config"
 }
 
 variable "kube_context" {
-  description = "Explicit kubeconfig context for the target cluster."
+  description = "Explicit kubeconfig context of the existing cluster to monitor."
   type        = string
 }
 
 variable "collector_namespace" {
-  description = "Existing namespace containing the collector Secret."
+  description = "Existing namespace containing the operator's Secret."
   type        = string
   default     = "costgraph"
 }
 
 variable "collector_secret_name" {
-  description = "Existing Secret containing the tenant's collector credential under apiKey."
+  description = "Existing Secret containing the tenant-bound collection credential under apiKey. Terraform never reads its contents."
   type        = string
   default     = "costgraph-collector"
 }
 
 variable "collector_api_url" {
-  description = "CostGraph ingestion API URL accessible from the Kubernetes cluster."
+  description = "CostGraph API base URL for the operator, including a reverse-proxy prefix when required."
   type        = string
   default     = "https://api.costgraph.ai"
 }

@@ -5,14 +5,16 @@
 - Jubril confirmed tenants and provider accounts as the first-release scope.
   Tenants must be first-class managed resources. GitHub is deferred. Member,
   role, and API-key management are not part of this initial scope.
-- The working five-resource shortlist is tenants, AWS connections, Google Cloud
-  connections, AI gateway connections, and FOCUS push connections. Agree exact
-  schemas and five useful data sources after closing their API and SDK gaps.
-- The implementation contains five managed resources and five read-only data
-  sources. Real local Terraform lifecycles cover tenants, AI gateways, and FOCUS
-  push connections. AWS and Google Cloud lifecycle tests are prepared but await
-  isolated cloud accounts. Do not report those tests as passed or the provider as
-  published on the Registry.
+- Provider v0.1.0 is published on the Terraform Registry with five resources and
+  five data sources. This branch prepares the next release with eight resources
+  and seven data sources by adding Azure connections, Kubernetes registrations,
+  and virtual tags. Do not call that next version published before release
+  verification completes.
+- Real local lifecycles cover tenants, AI gateways, FOCUS push connections, and
+  Kubernetes registrations. Verify the virtual-tag lifecycle and actual
+  attribution before release. AWS, Google Cloud, and Azure positive cloud
+  lifecycles remain prepared but unrun until isolated accounts are available.
+  OpenTofu Registry registration remains pending independently of CLI support.
 - Audit the selected public API lifecycles and reusable Go client coverage first.
   Close API and SDK gaps before adding Terraform resources. Keep those changes
   separate from the provider PRs.
@@ -160,15 +162,15 @@
   token permissions to read-only. Grant publishing writes only to release jobs.
   Never check out untrusted PR code in a privileged secrets-bearing job.
 - Keep one reviewed provider identity across server, examples, docs, installation
-  commands, and releases. Intended namespace is `baselinehq/costgraph`; Registry
-  ownership and availability still need confirmation before publication.
+  commands, and releases. The Terraform Registry identity is
+  `baselinehq/costgraph`. Track OpenTofu Registry inclusion separately.
 - Use GoReleaser config version 2 with immutable `v`-prefixed semantic tags.
   Package static binaries, platform ZIPs, the protocol manifest, SHA256SUMS, and
   its detached binary GPG signature in the Registry-required names. Publish the
   artifact bytes that were verified. Attestations do not replace Registry signing.
 - Keep Terraform and OpenTofu parity using the same provider source, protocol 6
   binary, and signed release artifacts. Verify the pinned CLI versions with real
-  core acceptance before claiming support. Positive AWS and Google Cloud tests
+  core acceptance before claiming support. Positive AWS, Google Cloud, and Azure tests
   still require isolated cloud fixtures for each CLI.
 - Keep the OpenTofu schema-load CI check and manual acceptance CLI selector.
   Use registry.opentofu.org/baselinehq/costgraph for OpenTofu development checks.
@@ -178,9 +180,9 @@
   GitHub issue form UI for provider and public-key submissions. Never create a
   substitute issue through gh or the API. Do not publish a fork or rebuild the
   same version separately for the two registries.
-- Confirm signer custody, both Registry registrations, platform matrix, and the
-  intended CLI version matrix before the first release. Do not claim publication
-  or compatibility from a schema check alone.
+- Confirm signer custody, platform matrix, and the intended CLI version matrix
+  before publication. Track registration and indexing for each Registry
+  independently. Do not claim compatibility from a schema check alone.
 - Prefer small resource-by-resource PRs. Release cadence is not established.
   Do not infer a weekly schedule or publish automatically on every merge.
 
