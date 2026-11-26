@@ -1,10 +1,11 @@
+TOFU ?= tofu
 TFPLUGINDOCS_VERSION := v0.25.0
 .DEFAULT_GOAL := build
 GORELEASER_VERSION := 2.20.3
 TFPLUGINDOCS := go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@$(TFPLUGINDOCS_VERSION)
 GORELEASER := go run github.com/goreleaser/goreleaser/v2@v$(GORELEASER_VERSION)
 
-.PHONY: fmt build lint generate check-generated testacc testacc-core testacc-aws testacc-gcp release-check
+.PHONY: fmt build lint generate check-generated testacc testacc-core testacc-aws testacc-gcp testacc-tofu check-opentofu release-check
 
 fmt:
 	gofmt -w .
@@ -37,6 +38,13 @@ testacc-aws:
 
 testacc-gcp:
 	TF_ACC=1 go test -v -count=1 -timeout 15m ./internal/provider -run '^TestAccGoogleCloudIntegration$$'
+
+check-opentofu: build
+	TOFU="$(TOFU)" sh scripts/check-opentofu.sh
+
+testacc-tofu:
+	@command -v "$(TOFU)" >/dev/null || (echo 'Set TOFU to an installed OpenTofu binary.'; exit 1)
+	TF_ACC_TERRAFORM_PATH="$$(command -v "$(TOFU)")" TF_ACC_PROVIDER_HOST=registry.opentofu.org TF_ACC_PROVIDER_NAMESPACE=baselinehq $(MAKE) testacc-core
 
 release-check:
 	$(GORELEASER) check

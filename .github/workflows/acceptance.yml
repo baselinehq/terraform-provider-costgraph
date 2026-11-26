@@ -3,6 +3,11 @@ name: API lifecycle acceptance
 on:
   workflow_dispatch:
     inputs:
+      cli:
+        description: CLI used for the lifecycle scenarios
+        type: choice
+        default: terraform
+        options: [terraform, opentofu]
       suite:
         description: Lifecycle suite to run against the isolated deployment
         type: choice
@@ -36,10 +41,22 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
         with:
           go-version-file: go.mod
-      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e
+      - if: inputs.cli == 'terraform'
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e
         with:
           terraform_version: 1.15.3
           terraform_wrapper: false
+      - if: inputs.cli == 'opentofu'
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f
+        with:
+          tofu_version: 1.13.10
+          tofu_wrapper: false
+      - if: inputs.cli == 'opentofu'
+        name: Select OpenTofu for the acceptance runner
+        run: |
+          printf '%s\n' "TF_ACC_TERRAFORM_PATH=$(command -v tofu)" \
+            "TF_ACC_PROVIDER_HOST=registry.opentofu.org" \
+            "TF_ACC_PROVIDER_NAMESPACE=baselinehq" >> "$GITHUB_ENV"
       - name: Run the selected lifecycle suite
         run: |
           case "$TEST_SUITE" in
