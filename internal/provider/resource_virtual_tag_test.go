@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -70,6 +71,24 @@ func TestAccVirtualTag(t *testing.T) {
 			if value.Key != tag || value.TenantID != tenant {
 				return fmt.Errorf("persisted key or tenant does not match")
 			}
+			metadata := state.RootModule().Resources["data.costgraph_virtual_tags.test"]
+			if metadata == nil {
+				return fmt.Errorf("virtual tag metadata data source is missing")
+			}
+			count, _ := strconv.Atoi(metadata.Primary.Attributes["keys.#"])
+			found := false
+			for i := 0; i < count; i++ {
+				prefix := fmt.Sprintf("keys.%d.", i)
+				if metadata.Primary.Attributes[prefix+"id"] == value.ID {
+					found = true
+					if metadata.Primary.Attributes[prefix+"rule_count"] != strconv.Itoa(len(value.Rules)) {
+						return fmt.Errorf("metadata rule count does not match actual configuration")
+					}
+				}
+			}
+			if !found {
+				return fmt.Errorf("metadata data source omitted managed key")
+			}
 			if stage == 3 {
 				if len(value.Rules) != 0 || value.Description != "" {
 					return fmt.Errorf("explicit empty rules and description did not clear")
@@ -118,6 +137,8 @@ func TestAccVirtualTag(t *testing.T) {
 			{Config: virtualTagConfig(tenant, tag, 1), PlanOnly: true},
 			{Config: virtualTagConfig(tenant, tag, 2), Check: check(2, "platform")},
 			{Config: virtualTagConfig(tenant, tag, 2), PlanOnly: true},
+			{Config: virtualTagConfig(tenant, tag, 4), Check: check(4, "payments-updated")},
+			{Config: virtualTagConfig(tenant, tag, 4), PlanOnly: true},
 			{Config: virtualTagConfig(tenant, tag, 3), Check: check(3, "")},
 			{Config: virtualTagConfig(tenant, tag, 3), PlanOnly: true},
 			{ResourceName: "costgraph_virtual_tag.test", ImportState: true, ImportStateVerify: true, ImportStateIdFunc: func(s *terraform.State) (string, error) {
@@ -153,6 +174,8 @@ func virtualTagConfig(tenant, key string, stage int) string {
 		rules = "[" + broad + "," + specific + "]"
 	case 2:
 		rules = `[{rule_key="specific",scope="billing",expression="bill.resource_name.startsWith(\"payments-\")",value="payments-updated",active=false},{rule_key="broad",scope="billing",expression="\"owner\" in bill.tags",inherited_from="bill.tags[\"owner\"]"}]`
+	case 4:
+		rules = `[{rule_key="specific",scope="billing",expression="bill.resource_name.startsWith(\"payments-\")",value="payments-updated",active=true},{rule_key="broad",scope="billing",expression="\"owner\" in bill.tags",inherited_from="bill.tags[\"owner\"]"}]`
 	case 3:
 		rules = "[]"
 		description = ""
@@ -271,6 +294,9 @@ func testVirtualTagSafeguards(t *testing.T, client *costgraph.Client, apiURL, te
 			t.Fatal(err)
 		}
 		_, err = limited.GetVirtualTag(ctx, tenant, created.ID)
+		requireStatus(err, http.StatusForbidden)
+		denied := costgraph.VirtualTagRequest{Key: key + "-denied", Rules: []costgraph.VirtualTagRuleInput{}}
+		_, err = limited.CreateVirtualTag(ctx, tenant, denied)
 		requireStatus(err, http.StatusForbidden)
 	}
 	_, err = client.LookupVirtualTag(ctx, tenant, key+"-missing")

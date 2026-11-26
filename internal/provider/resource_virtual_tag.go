@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"strings"
 
@@ -164,7 +165,18 @@ func virtualTagRequest(ctx context.Context, plan virtualTagModel) (costgraph.Vir
 	return costgraph.VirtualTagRequest{Key: plan.Key.ValueString(), Description: plan.Description.ValueString(), Rules: rules}, d
 }
 func virtualTagDiagnostic(err error) string {
-	return err.Error() + ". Refresh and create a new plan after a revision conflict. Import an existing key before managing it."
+	var apiErr *costgraph.APIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.Code {
+		case "virtual_tag_exists":
+			return err.Error() + ". Import the existing key rather than creating a duplicate."
+		case "virtual_tag_revision_conflict":
+			return err.Error() + ". Metadata or rules changed after refresh. Refresh and create a new plan."
+		case "virtual_tag_exported":
+			return err.Error() + ". Remove the key from billing exports before deleting it."
+		}
+	}
+	return err.Error()
 }
 func (r *virtualTagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan virtualTagModel
