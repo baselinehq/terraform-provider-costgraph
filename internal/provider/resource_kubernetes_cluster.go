@@ -109,7 +109,7 @@ func (r *kubernetesClusterResource) Read(ctx context.Context, req resource.ReadR
 		}
 	}
 	cluster, err := r.client.GetKubernetesCluster(ctx, organizationID, state.ID.ValueString())
-	if isNotFound(err) {
+	if isKubernetesClusterNotFound(err) {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -130,7 +130,7 @@ func (r *kubernetesClusterResource) Delete(ctx context.Context, req resource.Del
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.client.DeleteKubernetesCluster(ctx, state.OrganizationID.ValueString(), state.ID.ValueString()); err != nil && !isNotFound(err) {
+	if err := r.client.DeleteKubernetesCluster(ctx, state.OrganizationID.ValueString(), state.ID.ValueString()); err != nil && !isKubernetesClusterNotFound(err) {
 		resp.Diagnostics.AddError("Could not disconnect Kubernetes cluster", err.Error())
 	}
 }
@@ -157,4 +157,9 @@ func (r *kubernetesClusterResource) organizationID(ctx context.Context) (string,
 
 func kubernetesClusterState(cluster *costgraph.KubernetesCluster, organizationID string) kubernetesClusterModel {
 	return kubernetesClusterModel{ID: types.StringValue(cluster.ID), Name: types.StringValue(cluster.Name), TenantID: types.StringValue(cluster.TenantID), OrganizationID: types.StringValue(organizationID)}
+}
+
+func isKubernetesClusterNotFound(err error) bool {
+	var apiError *costgraph.APIError
+	return errors.As(err, &apiError) && apiError.StatusCode == 404 && apiError.Code == "not_found"
 }
