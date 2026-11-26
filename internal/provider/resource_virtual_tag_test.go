@@ -200,20 +200,41 @@ data "costgraph_virtual_tags" "test" {
 }
 
 func assertVirtualTagCost(apiURL, key, tenant, fixture, tag, expected string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		matches, err := virtualTagCostMatches(ctx, apiURL, key, tenant, fixture, tag, expected)
+		if err != nil {
+			return err
+		}
+		if matches {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("public cost query did not assign the $42 fixture to %q before refresh timeout", expected)
+		case <-ticker.C:
+		}
+	}
+}
+
+func virtualTagCostMatches(ctx context.Context, apiURL, key, tenant, fixture, tag, expected string) (bool, error) {
 	params := url.Values{"group_by": {"tag:" + tag}, "layer": {"billed"}, "filter": {"resource:" + fixture}, "period": {"month_to_date"}}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, strings.TrimRight(apiURL, "/")+"/api/v1/tenant/cost/query?"+params.Encode(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(apiURL, "/")+"/api/v1/tenant/cost/query?"+params.Encode(), nil)
 	if err != nil {
-		return err
+		return false, err
 	}
 	req.Header.Set("X-API-Key", key)
 	req.Header.Set("X-CostGraph-Tenant-ID", tenant)
 	response, err := (&http.Client{Timeout: 30 * time.Second}).Do(req)
 	if err != nil {
-		return fmt.Errorf("public cost query failed")
+		return false, fmt.Errorf("public cost query failed")
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("public cost query returned HTTP %d", response.StatusCode)
+		return false, fmt.Errorf("public cost query returned HTTP %d", response.StatusCode)
 	}
 	var result struct {
 		Data struct {
@@ -224,12 +245,9 @@ func assertVirtualTagCost(apiURL, key, tenant, fixture, tag, expected string) er
 		} `json:"data"`
 	}
 	if json.NewDecoder(io.LimitReader(response.Body, 8<<20)).Decode(&result) != nil {
-		return fmt.Errorf("could not decode cost query")
+		return false, fmt.Errorf("could not decode cost query")
 	}
-	if len(result.Data.Groups) != 1 || result.Data.Groups[0].Key != expected || result.Data.Groups[0].Current != 42 {
-		return fmt.Errorf("public cost query did not assign the $42 fixture to %q", expected)
-	}
-	return nil
+	return len(result.Data.Groups) == 1 && result.Data.Groups[0].Key == expected && result.Data.Groups[0].Current == 42, nil
 }
 
 func testVirtualTagSafeguards(t *testing.T, client *costgraph.Client, apiURL, tenant, key string) {
