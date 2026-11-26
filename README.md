@@ -48,6 +48,9 @@ requirements. Cloud IAM roles, impersonation permissions, and billing exports
 must exist before connecting their accounts. This provider configures CostGraph
 connections rather than creating those cloud resources.
 
+Proposed Azure, Kubernetes with Helm, and virtual tag interfaces are in
+[examples/proposals](examples/proposals). They are not available in v0.1.0.
+
 ## Develop locally
 
 Use Go 1.26 or later. The verified CLIs are Terraform 1.15.3 and OpenTofu
