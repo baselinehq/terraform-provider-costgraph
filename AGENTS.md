@@ -2,8 +2,12 @@
 
 ## Scope and current stage
 
-- Start with integrations and account setup. Agree approximately five managed
-  resources and five useful data sources with Jubril before implementing them.
+- Jubril confirmed tenants and provider accounts as the first-release scope.
+  Tenants must be first-class managed resources. GitHub is deferred. Member,
+  role, and API-key management are not part of this initial scope.
+- The working five-resource shortlist is tenants, AWS connections, Google Cloud
+  connections, AI gateway connections, and FOCUS push connections. Agree exact
+  schemas and five useful data sources after closing their API and SDK gaps.
 - This repository currently contains project guidance only. Do not report a
   provider, SDK, test suite, workflow, or Registry release as implemented.
 - Audit the selected public API lifecycles and reusable Go client coverage first.
