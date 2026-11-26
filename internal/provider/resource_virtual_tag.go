@@ -164,6 +164,10 @@ func virtualTagRequest(ctx context.Context, plan virtualTagModel) (costgraph.Vir
 	}
 	return costgraph.VirtualTagRequest{Key: plan.Key.ValueString(), Description: plan.Description.ValueString(), Rules: rules}, d
 }
+func virtualTagNotFound(err error) bool {
+	var apiErr *costgraph.APIError
+	return errors.As(err, &apiErr) && apiErr.StatusCode == 404 && apiErr.Code == "not_found"
+}
 func virtualTagDiagnostic(err error) string {
 	var apiErr *costgraph.APIError
 	if errors.As(err, &apiErr) {
@@ -205,7 +209,7 @@ func (r *virtualTagResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 	saved, err := r.client.GetVirtualTag(ctx, state.TenantID.ValueString(), state.ID.ValueString())
-	if isNotFound(err) {
+	if virtualTagNotFound(err) {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -246,7 +250,7 @@ func (r *virtualTagResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 	err := r.client.DeleteVirtualTag(ctx, state.TenantID.ValueString(), state.ID.ValueString(), state.Revision.ValueString())
-	if err != nil && !isNotFound(err) {
+	if err != nil && !virtualTagNotFound(err) {
 		resp.Diagnostics.AddError("Could not delete virtual tag", virtualTagDiagnostic(err))
 	}
 }
