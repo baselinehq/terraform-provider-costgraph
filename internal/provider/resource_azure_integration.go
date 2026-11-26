@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"strings"
 
@@ -170,7 +171,7 @@ func (r *azureIntegrationResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 	state, err := r.read(ctx, current.ID.ValueString())
-	if isNotFound(err) {
+	if isAzureIntegrationNotFound(err) {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -224,7 +225,7 @@ func (r *azureIntegrationResource) Delete(ctx context.Context, req resource.Dele
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.client.DeleteConnection(ctx, state.ID.ValueString()); err != nil && !isNotFound(err) {
+	if err := r.client.DeleteConnection(ctx, state.ID.ValueString()); err != nil && !isAzureIntegrationNotFound(err) {
 		resp.Diagnostics.AddError("Could not disconnect Azure", err.Error())
 	}
 }
@@ -301,4 +302,9 @@ func (v azureExportNameValidator) ValidateString(ctx context.Context, req valida
 	if value := req.ConfigValue.ValueString(); value != strings.TrimSpace(value) {
 		resp.Diagnostics.AddAttributeError(req.Path, "Invalid export folder", v.Description(ctx))
 	}
+}
+
+func isAzureIntegrationNotFound(err error) bool {
+	var apiError *costgraph.APIError
+	return errors.As(err, &apiError) && apiError.StatusCode == 404 && apiError.Code == "not_found"
 }
