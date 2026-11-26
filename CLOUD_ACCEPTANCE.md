@@ -1,6 +1,6 @@
 # Verify cloud connections
 
-Run these scenarios against isolated AWS and Google Cloud billing exports.
+Run these scenarios against isolated AWS, Google Cloud, and Azure billing exports.
 They exercise the Terraform CLI and the real CostGraph API. They are prepared
 and have not been run because dedicated cloud accounts are not available yet.
 Compilation and core acceptance do not establish cloud connection correctness.
@@ -84,10 +84,47 @@ The test covers create, direct API readback, an empty follow-up plan, rename
 without changing the UUID, import, external deletion and recreation, and
 API-confirmed destruction. It disables recommendation collection.
 
+## Prepare the Azure export
+
+Create a dedicated Azure FOCUS export and a service principal with read access to
+its blob container. Keep the initial and replacement client secrets valid during
+the scenario so CostGraph can verify both. Use a storage account without an
+existing connection in the test tenant.
+
+Set these values.
+
+| Variable | Required value |
+| --- | --- |
+| `COSTGRAPH_TEST_AZURE_TENANT_ID` | Microsoft Entra directory UUID. |
+| `COSTGRAPH_TEST_AZURE_CLIENT_ID` | Application UUID of the export reader. |
+| `COSTGRAPH_TEST_AZURE_CLIENT_SECRET` | Initial valid client secret. |
+| `COSTGRAPH_TEST_AZURE_ROTATED_CLIENT_SECRET` | A different valid secret for the same application. |
+| `COSTGRAPH_TEST_AZURE_STORAGE_ACCOUNT` | Dedicated storage account containing the export. |
+| `COSTGRAPH_TEST_AZURE_CONTAINER` | Blob container containing readable export data. |
+| `COSTGRAPH_TEST_AZURE_EXPORT_NAME` | Nonempty folder selection used for the first apply. |
+
+The scenario clears the folder selection. The principal must also have access
+to the container's exports without that folder restriction. The Entra tenant ID
+is different from `COSTGRAPH_TEST_TENANT_ID`, which identifies the CostGraph
+tenant receiving the billing data.
+
+Run the Azure lifecycle.
+
+```sh
+make testacc-azure
+```
+
+The scenario covers creation, nonsecret API readback, an empty follow-up plan,
+import, settings updates without a secret, actual credential rotation, folder
+clearing, and confirmed destruction. It checks saved state for secret leakage.
+Separate local saved-plan checks on Terraform and OpenTofu proved redaction of a
+synthetic secret. Those checks do not prove Azure access or a live lifecycle.
+
 ## Run through GitHub Actions
 
 Configure the protected `acceptance` environment with the matching variables and
-a secret `COSTGRAPH_TEST_MANAGEMENT_API_KEY`. Select `aws` or `gcp` in the manual
-API lifecycle acceptance workflow. Run it only against reviewed, trusted code.
-Select `all` only when both cloud fixtures and the core test configuration are
-available. A green credentialless PR check does not replace these scenarios.
+a secret `COSTGRAPH_TEST_MANAGEMENT_API_KEY`. Store both Azure client secrets in
+GitHub environment secrets rather than variables. Select `aws`, `gcp`, or `azure`
+in the manual API lifecycle acceptance workflow. Run it only against reviewed, trusted code.
+Select `all` only when all three cloud fixtures and the core test configuration
+are available. A green credentialless PR check does not replace these scenarios.

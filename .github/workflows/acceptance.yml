@@ -12,7 +12,7 @@ on:
         description: Lifecycle suite to run against the isolated deployment
         type: choice
         default: core
-        options: [core, aws, gcp, all]
+        options: [core, aws, gcp, azure, kubernetes, virtual-tags, all]
 
 permissions:
   contents: read
@@ -33,6 +33,15 @@ jobs:
       COSTGRAPH_TEST_GCP_BILLING_ACCOUNT_ID: ${{ vars.COSTGRAPH_TEST_GCP_BILLING_ACCOUNT_ID }}
       COSTGRAPH_TEST_GCP_QUERY_PROJECT: ${{ vars.COSTGRAPH_TEST_GCP_QUERY_PROJECT }}
       COSTGRAPH_TEST_GCP_TARGET_PRINCIPAL: ${{ vars.COSTGRAPH_TEST_GCP_TARGET_PRINCIPAL }}
+      COSTGRAPH_TEST_AZURE_TENANT_ID: ${{ vars.COSTGRAPH_TEST_AZURE_TENANT_ID }}
+      COSTGRAPH_TEST_AZURE_CLIENT_ID: ${{ vars.COSTGRAPH_TEST_AZURE_CLIENT_ID }}
+      COSTGRAPH_TEST_AZURE_CLIENT_SECRET: ${{ secrets.COSTGRAPH_TEST_AZURE_CLIENT_SECRET }}
+      COSTGRAPH_TEST_AZURE_ROTATED_CLIENT_SECRET: ${{ secrets.COSTGRAPH_TEST_AZURE_ROTATED_CLIENT_SECRET }}
+      COSTGRAPH_TEST_AZURE_STORAGE_ACCOUNT: ${{ vars.COSTGRAPH_TEST_AZURE_STORAGE_ACCOUNT }}
+      COSTGRAPH_TEST_AZURE_CONTAINER: ${{ vars.COSTGRAPH_TEST_AZURE_CONTAINER }}
+      COSTGRAPH_TEST_AZURE_EXPORT_NAME: ${{ vars.COSTGRAPH_TEST_AZURE_EXPORT_NAME }}
+      COSTGRAPH_TEST_VIRTUAL_TAG_RESOURCE_ID: ${{ vars.COSTGRAPH_TEST_VIRTUAL_TAG_RESOURCE_ID }}
+      COSTGRAPH_TEST_OTHER_TENANT_ID: ${{ vars.COSTGRAPH_TEST_OTHER_TENANT_ID }}
       COSTGRAPH_TEST_API_URL: ${{ vars.COSTGRAPH_TEST_API_URL }}
       COSTGRAPH_TEST_API_KEY: ${{ secrets.COSTGRAPH_TEST_API_KEY }}
       COSTGRAPH_TEST_TENANT_ID: ${{ vars.COSTGRAPH_TEST_TENANT_ID }}
@@ -63,6 +72,9 @@ jobs:
             core) make testacc-core ;;
             aws) make testacc-aws ;;
             gcp) make testacc-gcp ;;
+            azure) make testacc-azure ;;
+            kubernetes) make testacc-kubernetes ;;
+            virtual-tags) make testacc-virtual-tags ;;
             all) make testacc ;;
             *) exit 1 ;;
           esac
