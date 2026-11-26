@@ -1,0 +1,14 @@
+.DS_Store
+bin/
+dist/
+coverage.out
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+.env
+.env.*
+!.env.example
+!*.tfvars.example
