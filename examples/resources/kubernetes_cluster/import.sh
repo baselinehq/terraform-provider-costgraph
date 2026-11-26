@@ -1,0 +1,1 @@
+terraform import costgraph_kubernetes_cluster.production 00000000-0000-0000-0000-000000000001
