@@ -1,0 +1,37 @@
+---
+page_title: "CostGraph Provider"
+description: |-
+  Manage CostGraph configuration in hosted or self-hosted deployments using an API key.
+---
+
+# CostGraph provider
+
+{{ .Description | trimspace }}
+
+## Configure authentication
+
+Set `COSTGRAPH_API_KEY` to an API key from the deployment you want to manage.
+The resource documentation lists the permissions that the key needs.
+
+For hosted CostGraph, the API URL defaults to `https://api.costgraph.ai`.
+For a self-hosted deployment, set `COSTGRAPH_API_URL` to its API base URL.
+Omit `/api/v1` and keep any reverse-proxy path prefix.
+
+You can also set `api_key` and `api_url` in a provider block.
+Explicit values take precedence over environment variables.
+Keep keys in environment variables or sensitive input variables.
+
+## Configure hosted CostGraph
+
+The following example uses `COSTGRAPH_API_KEY` and the hosted API URL default.
+
+{{ tffile "examples/provider/provider.tf" }}
+
+## Configure self-hosted CostGraph
+
+Set `COSTGRAPH_API_KEY` to a key from your self-hosted deployment. The following
+example connects Terraform to that deployment's API.
+
+{{ tffile "examples/self-hosted/provider.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

@@ -8,8 +8,10 @@
 - The working five-resource shortlist is tenants, AWS connections, Google Cloud
   connections, AI gateway connections, and FOCUS push connections. Agree exact
   schemas and five useful data sources after closing their API and SDK gaps.
-- This repository currently contains project guidance only. Do not report a
-  provider, SDK, test suite, workflow, or Registry release as implemented.
+- The first implementation contains a FOCUS push integration resource and five
+  read-only data sources. Tenant, AWS, Google Cloud, and AI gateway managed
+  resources remain pending their API contracts. Do not report the full release
+  scope as implemented or the provider as published on the Registry.
 - Audit the selected public API lifecycles and reusable Go client coverage first.
   Close API and SDK gaps before adding Terraform resources. Keep those changes
   separate from the provider PRs.
@@ -118,7 +120,7 @@
 - Keep runnable HCL in `examples/resources/<type>` and
   `examples/data-sources/<type>`. Generate Registry docs into `docs/` from schema
   descriptions and examples with a pinned documentation tool.
-- Once Go implementation begins, provide Makefile targets for `fmt`, `build`,
+- Keep Makefile targets for `fmt`, `build`,
   `lint`, `generate`, `check-generated`, `testacc`, and `release-check`. Explain
   their prerequisites. Do not create placeholder targets that report success.
 - Pin dependencies and tools. Derive CI Go from `go.mod`. Check generation drift
