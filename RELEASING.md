@@ -5,7 +5,7 @@ Both registries can index the same signed GitHub release from
 set of binaries, checksum file, and signature. Registry publication is separate
 from CLI compatibility testing.
 
-Provider v0.1.0 is published on the Terraform Registry. The namespace and public
+The provider is listed on the Terraform Registry. The namespace and public
 signing key are registered there. OpenTofu Registry registration remains pending.
 The release workflow creates a draft, so a successful build does not publish the
 next version automatically.

@@ -5,14 +5,14 @@
 - Jubril confirmed tenants and provider accounts as the first-release scope.
   Tenants must be first-class managed resources. GitHub is deferred. Member,
   role, and API-key management are not part of this initial scope.
-- Provider v0.1.0 is published on the Terraform Registry with five resources and
-  five data sources. This branch prepares the next release with eight resources
-  and seven data sources by adding Azure connections, Kubernetes registrations,
-  and virtual tags. Do not call that next version published before release
-  verification completes.
-- Real local lifecycles cover tenants, AI gateways, FOCUS push connections, and
-  Kubernetes registrations. Verify the virtual-tag lifecycle and actual
-  attribution before release. AWS, Google Cloud, and Azure positive cloud
+- The implementation has eight resources and seven data sources. Version 0.1.0
+  introduced the first five of each. Version 0.2.0 adds Azure connections,
+  Kubernetes registrations, and virtual tags. Confirm GitHub and Registry
+  publication before telling a user that a version is available.
+- Real local core lifecycles passed with Terraform and OpenTofu for tenants, AI
+  gateways, FOCUS push connections, Kubernetes registrations, and virtual tags.
+  Virtual-tag tests verify actual billed attribution, precedence, and inherited
+  values through the public cost API. AWS, Google Cloud, and Azure positive cloud
   lifecycles remain prepared but unrun until isolated accounts are available.
   OpenTofu Registry registration remains pending independently of CLI support.
 - Audit the selected public API lifecycles and reusable Go client coverage first.
