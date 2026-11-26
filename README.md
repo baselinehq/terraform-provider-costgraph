@@ -5,10 +5,10 @@ virtual tags with Terraform. Use the same provider with hosted or self-hosted
 CostGraph. API access comes from the shared
 [CostGraph Go SDK](https://github.com/baselinehq/costgraph-go).
 
-Provider [v0.1.0 is published on the Terraform Registry](https://registry.terraform.io/providers/baselinehq/costgraph/0.1.0).
-This branch prepares the next release with eight resources and seven data sources.
+Provider [v0.2.0](https://registry.terraform.io/providers/baselinehq/costgraph/0.2.0)
+includes eight resources and seven data sources.
 Azure, Kubernetes registration, and virtual-tag management require the
-corresponding backend APIs before you can apply their configurations.
+corresponding CostGraph management APIs before you can apply their configurations.
 
 ## Manage CostGraph configuration
 

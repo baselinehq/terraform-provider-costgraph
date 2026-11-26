@@ -90,7 +90,7 @@ func (r *azureIntegrationResource) Schema(_ context.Context, _ resource.SchemaRe
 		Validators:          []validator.String{azureExportNameValidator{}},
 	}
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Connect an existing Azure FOCUS billing export through a service principal. Requires an organization owner's user API key with organization:manage and a backend supporting Azure management. CostGraph verifies export access before saving. Azure storage, the export, principal, and read permissions must already exist. Secrets are write-only and rotate through secret_version. Requires Terraform 1.11 or later or OpenTofu 1.11 or later. Import supports directly owned service-principal connections identified by their storage account. Destroy disconnects collection and removes the connection's data from CostGraph cost views. It does not delete Azure resources or revoke the principal's secret.",
+		MarkdownDescription: "Connect an existing Azure FOCUS billing export through a service principal. Requires an organization owner's user API key with organization:manage and a CostGraph deployment with the Azure management APIs. CostGraph verifies export access before saving. Azure storage, the export, principal, and read permissions must already exist. Secrets are write-only and rotate through secret_version. Requires Terraform 1.11 or later or OpenTofu 1.11 or later. Import supports directly owned service-principal connections identified by their storage account. Destroy disconnects collection and removes the connection's data from CostGraph cost views. It does not delete Azure resources or revoke the principal's secret.",
 		Attributes:          attributes,
 	}
 }
